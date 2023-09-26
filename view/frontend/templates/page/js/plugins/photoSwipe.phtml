@@ -1,0 +1,115 @@
+<?php
+declare(strict_types=1);
+
+use Blackbird\HyvaPhotoSwipe\Api\HyvaPhotoSwipeInterface;
+use Blackbird\HyvaPhotoSwipe\Api\RequirementsInterface;
+use Magento\Framework\Escaper;
+use Magento\Framework\View\Element\Template;
+
+/** @var Escaper $escaper */
+/** @var Template $block */
+?>
+<script>
+    (() => {
+        function loadJSLightboxLibrary() {
+            return import('<?=
+                $block->getViewFileUrl(RequirementsInterface::URL_PHOTO_SWIPE_LIGHTBOX_MIN_JS)
+            ?>');
+        }
+        function loadJSLibrary() {
+            return import('<?=
+                $block->getViewFileUrl(RequirementsInterface::URL_PHOTO_SWIPE_MIN_JS)
+            ?>');
+        }
+        function loadCssLibrary() {
+            return new Promise(resolve => {
+                const link = document.createElement('link');
+                link.rel = "stylesheet";
+                link.type = "text/css";
+                link.href = '<?= $escaper->escapeUrl(
+                    $block->getViewFileUrl(RequirementsInterface::URL_PHOTO_SWIPE_MIN_CSS)
+                ) ?>';
+                link.onload = resolve;
+                document.head.appendChild(link);
+            })
+        }
+
+        function loadScripts() {
+            if(isScriptAdded()){
+                return;
+            }
+
+            Promise.all([loadJSLightboxLibrary(), loadJSLibrary(), loadCssLibrary()])
+                .then((results) => setWindowVariable(results));
+        }
+        function setWindowVariable(results) {
+            const requiredClasses = <?= json_encode(RequirementsInterface::REQUIRED_CLASSES, JSON_THROW_ON_ERROR) ?>;
+            const resultsWithClasses = results.filter((current) => current.default);
+            const classes = resultsWithClasses
+                .reduce((result, current) => {
+                    result[current.default.name] = current.default;
+                    return result;
+                }, {});
+
+            let successImportedClasses = 0;
+
+            requiredClasses.forEach((requiredClass) => {
+                if (!Object.keys(classes).includes(requiredClass)) {
+                    throw new Error(`[HyvaPhotoSwipe] Could not load the required class ${requiredClass}`);
+                }
+
+                window[requiredClass] = classes[requiredClass];
+                successImportedClasses++;
+            });
+
+            if (successImportedClasses === requiredClasses.length) {
+                Alpine.store('<?= HyvaPhotoSwipeInterface::HYVA_PHOTO_SWIPE ?>').is_loaded = true;
+            }
+        }
+        function isScriptAdded() {
+            const requiredClasses = <?= json_encode(RequirementsInterface::REQUIRED_CLASSES, JSON_THROW_ON_ERROR) ?>;
+
+            let successImportedClasses = 0;
+
+            requiredClasses.forEach((requiredClass) => {
+                if (!window[requiredClass]) {
+                    return;
+                }
+
+                successImportedClasses++;
+            });
+
+            return successImportedClasses === requiredClasses.length;
+        }
+        function isPhotoSwipeRequired() {
+            const scriptElements = document.querySelectorAll('script');
+
+            return Array.from(scriptElements).filter((script) => {
+                const scriptContent = script.textContent || script.innerText;
+
+                // Specific string searched, compatible with JS minified, ignore this script
+                return scriptContent.includes('PhotoSwipeLightbox(') && !scriptContent.includes('isPhotoSwipeRequired');
+            }).length;
+        }
+
+        function initializeStoreState() {
+            Alpine.store('<?= HyvaPhotoSwipeInterface::HYVA_PHOTO_SWIPE ?>', {
+                is_loaded: false,
+
+                forceLoad() {
+                    loadScripts();
+                }
+            });
+        }
+
+        document.addEventListener("alpine:init", () => {
+            initializeStoreState();
+
+            if (!isPhotoSwipeRequired()) {
+                return;
+            }
+
+            loadScripts();
+        });
+    })();
+</script>

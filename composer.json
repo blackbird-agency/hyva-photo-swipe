@@ -1,0 +1,26 @@
+{
+  "name": "blackbird/hyva-photo-swipe",
+  "version": "1.0.0",
+  "authors": [
+    {
+      "name": "Blackbird Agency",
+      "email": "contact@bird.eu",
+      "homepage": "https://black.bird.eu"
+    }
+  ],
+  "description": "An implementation of PhotoSwipe library in Hyvä Theme for Magento 2",
+  "type": "magento2-module",
+  "require": {
+    "magento/framework": "*",
+    "hyva-themes/magento2-default-theme": "*"
+  },
+  "license": "MIT",
+  "autoload": {
+    "files": [
+      "registration.php"
+    ],
+    "psr-4": {
+      "Blackbird\\HyvaPhotoSwipe\\": ""
+    }
+  }
+}
