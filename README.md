@@ -164,7 +164,7 @@ use \Blackbird\HyvaPhotoSwipe\Api\HyvaPhotoSwipeInterface;
      }
 </script>
 ```
-*You can specify any of the SplideJS options as shown [here](https://splidejs.com/guides/options/)*
+*You can specify any of the PhotoSwipe options as shown [here](https://photoswipe.com/options/)*
 
 ### Example : usage of `forceLoad()`
 
